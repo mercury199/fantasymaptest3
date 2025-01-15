@@ -238,6 +238,9 @@ function editHeightmap(options) {
     }
 
     Biomes.define();
+
+    Resources.generate();
+
     rankCells();
 
     Cultures.generate();
