@@ -291,6 +291,28 @@ async function checkLoadParameters() {
     return;
   }
 
+  // restore onloadBehavior from localStorage if saved
+  const storedBehavior = localStorage.getItem("onloadBehavior");
+  if (storedBehavior) {
+    byId("onloadBehavior").value = storedBehavior;
+  }
+
+  // check if there is a default map saved to indexedDB
+  if (byId("onloadBehavior").value === "default") {
+    try {
+      const blob = await ldb.get("defaultMap");
+      if (blob) {
+        WARN && console.warn("Loading default map");
+        uploadMap(blob);
+        return;
+      } else {
+        WARN && console.warn("No default map set, generating random map");
+      }
+    } catch (error) {
+      ERROR && console.error(error);
+    }
+  }
+
   // check if there is a map saved to indexedDB
   if (byId("onloadBehavior").value === "lastSaved") {
     try {
