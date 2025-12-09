@@ -37,7 +37,8 @@ window.Provinces = (function () {
     }
 
     const provincesRatio = +byId("provincesRatio").value;
-    const max = provincesRatio == 100 ? 1000 : gauss(20, 5, 5, 100) * provincesRatio ** 0.5; // max growth
+    // original const max = provincesRatio == 100 ? 1000 : gauss(20, 5, 5, 100) * provincesRatio ** 0.5; // max growth
+        const max = provincesRatio == 100 ? 10000 : gauss(20, 5, 5, 100) * provincesRatio ** 0.5; // max growth
 
     // generate provinces for selected burgs
     states.forEach(s => {
@@ -65,7 +66,7 @@ window.Provinces = (function () {
         const formName = rw(form);
         form[formName] += 10;
         const fullName = name + " " + formName;
-        const color = getMixedColor(s.color);
+        const color = getMixedColor(s.color);// need a util function to make sure it's unique. 
         const kinship = nameByBurg ? 0.8 : 0.4;
         const type = BurgsAndStates.getType(center, burg.port);
         const coa = COA.generate(stateBurgs[i].coa, kinship, null, type);
