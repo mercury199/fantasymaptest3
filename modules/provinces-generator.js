@@ -66,7 +66,7 @@ window.Provinces = (function () {
         const formName = rw(form);
         form[formName] += 10;
         const fullName = name + " " + formName;
-        const color = getMixedColor(s.color);// need a util function to make sure it's unique. 
+        const color = getMixedColorUnique(s.color,provinces);// need a util function to make sure it's unique.// could pass provinces here.  
         const kinship = nameByBurg ? 0.8 : 0.4;
         const type = BurgsAndStates.getType(center, burg.port);
         const coa = COA.generate(stateBurgs[i].coa, kinship, null, type);
@@ -182,7 +182,7 @@ window.Provinces = (function () {
         // generate "wild" province name
         const c = cells.culture[center];
         const f = pack.features[cells.f[center]];
-        const color = getMixedColor(s.color);
+        const color = getMixedColorUnique(s.color,provinces);
 
         const provCells = stateNoProvince.filter(i => provinceIds[i] === provinceId);
         const singleIsle = provCells.length === f.cells && !provCells.find(i => cells.f[i] !== f.i);
