@@ -285,6 +285,8 @@ function togglePrecipitation(event) {
 }
 
 function drawPrecipitation() {
+  //scaleColorHex
+  
   TIME && console.time("drawPrecipitation");
 
   prec.selectAll("circle").remove();
@@ -312,7 +314,264 @@ function drawPrecipitation() {
   TIME && console.timeEnd("drawPrecipitation");
 }
 
+
+
+
+function toggleProvinces2(event) {
+  if (!layerIsOn("toggleProvinces")) {
+    turnButtonOn("toggleProvinces");
+    drawProvinces();
+    if (event && isCtrlClick(event)) editStyle("provs");
+  } else {
+    if (event && isCtrlClick(event)) return editStyle("provs");
+    provs.selectAll("*").remove();
+    turnButtonOff("toggleProvinces");
+  }
+}
+
+function drawProvinces2() {
+  TIME && console.time("drawProvinces");
+  const {cells, provinces} = pack;
+
+  const bodyPaths = new Array(provinces.length - 1);
+
+
+  const isolines = getIsolines(pack, cellId => cells.province[cellId], {fill: true, waterGap: true});
+
+  Object.entries(isolines).forEach(([index, {fill, waterGap}]) => {
+    const color = provinces[index].color;
+    bodyPaths.push(getGappedFillPaths("province", fill, waterGap, color, index));
+  });
+
+  const labels = provinces
+    .filter(p => p.i && !p.removed)
+    .map(p => {
+      const [x, y] = p.pole || cells.p[p.center];
+      return `<text x="${x}" y="${y}" id="provinceLabel${p.i}">${p.name}</text>`;
+    });
+
+  byId("provs").innerHTML = `
+    <g id='provincesBody'>${bodyPaths.join("")}</g>
+    <g id='provinceLabels'>${labels.join("")}</g>
+  `;
+  byId("provinceLabels").style.display = byId("provs").dataset.labels === "1" ? "block" : "none";
+
+  TIME && console.timeEnd("drawProvinces");
+}
+
+
 function togglePopulation(event) {
+  if (!layerIsOn("togglePopulation")) {
+    turnButtonOn("togglePopulation");
+    console.log("testing");
+    console.log(cells);
+    console.log("dkfalsjdklfa");
+    console.log(pack);
+    console.log('fjakldsfjaklsd');
+    console.log(population);
+    drawPopulation();
+    if (event && isCtrlClick(event)) editStyle("population");
+  } else {
+    if (event && isCtrlClick(event)) return editStyle("population");
+    turnButtonOff("togglePopulation");
+    population.selectAll("*").remove();
+  }
+}
+
+
+function drawPopulation() {
+  //population.selectAll("line").remove();
+  const {cells, burgs} = pack;
+  //drawPopulationHeightmap();
+  /*
+  const rural = Array.from(
+    cells.i.filter(i => cells.pop[i] > 0),
+    i => [...cells.p[i], cells.p[i][1] - cells.pop[i] / 5]
+  );
+
+  population
+    .select("#rural")
+    .selectAll("line")
+    .data(rural)
+    .enter();
+
+  const urban = burgs.filter(b => b.i && !b.removed).map(b => [b.x, b.y, b.y - (b.population / 5) * urbanization]);
+  population
+    .select("#urban")
+    .selectAll("line")
+    .data(urban)
+    .enter();
+*/
+ // console.log(population);
+  //need to modify the population and more here, and other stuff, need ot make it normal . Need to also 
+  // 
+  //calculate the max population. 
+  /*
+ let c_rural = [];
+  let c_urban = [];
+ let c_total = [];
+ let max_tot = 0;
+ console.log(pack.area);
+  for(let z = 0; z < pack.cells.b.length;z++){
+    c_rural[z]=pack.cells.pop[z];
+    c_urban[z]=0;
+   if(pack.cells.burg[z]!=0){
+    c_urban[z] = pack.burgs[pack.cells.burg[z]].population;
+   }
+   c_total[z] = c_rural[z] + c_urban[z];
+
+  }
+    max_tot = Math.max(c_total);*/
+
+
+    let cell_pops=[];
+    let max_tot = 0;
+    let urb_pop = [];
+    for(const ind1 in pack.cells.i ){
+      let rur = pack.cells.pop[ind1];
+      let urb = 0;
+      if(pack.cells.burg[ind1]!=0){
+        urb = pack.burgs[pack.cells.burg[ind1]].population;
+      }
+      if(rur+urb>max_tot){
+        max_tot=rur+urb;
+      }
+      urb_pop[ind1]=urb;
+      cell_pops[ind1]={
+        i: ind1,
+        rural: rur,
+        urban: urb,
+        tot: rur+urb,
+        color: null
+      }
+    }
+    //  max_tot = Math.max(cell_pops.tot);
+  console.log(max_tot);
+  pack.cells.urb_pop = urb_pop;
+  for (let c_i in cell_pops){
+    cell_pops[c_i].color=scaleColorHex(cell_pops[c_i].urban,cell_pops[c_i].rural,max_tot);
+    console.log(cell_pops[c_i]);
+  }
+  console.log(cell_pops);
+
+
+
+
+
+    const bodyPaths = new Array(pack.cells.b.length - 1);
+    console.log("BodyPaths:" + bodyPaths);
+    const isolines = getIsolines(pack, cellId => (scaleColorHex(pack.cells.urb_pop[cellId],pack.cells.pop[cellId],max_tot)), {fill: true, waterGap: true});
+    console.log("isolines: " + isolines);
+    Object.entries(isolines).forEach(([index, {fill, waterGap}]) => {
+      console.log(index);
+    const color = index;
+    bodyPaths.push(getGappedFillPaths("population", fill, waterGap, color, index));
+  });
+  console.log("isolines2: " + isolines);
+  console.log("BodyPaths2:" + bodyPaths);
+    byId("population").innerHTML = /* html */ `
+    <g id='populationRural'>${bodyPaths.join("")}</g>
+  `;
+
+
+
+}
+
+
+
+
+function togglePopulation3(event) {
+  if (!layerIsOn("togglePopulation")) {
+    turnButtonOn("togglePopulation");
+    $("#population").fadeIn();
+    console.log(population);
+  //  console.log($("#population"));
+    if (!population.selectAll("*").size()) drawPopulation();
+    if (event && isCtrlClick(event)) editStyle("population");
+  } else {
+    if (event && isCtrlClick(event)) return editStyle("population");
+    $("#population").fadeOut();
+    turnButtonOff("togglePopulation");
+  }
+}
+
+function drawPopulation3() {
+  TIME && console.time("drawIcePop");
+
+  let cell_pops=[];
+   let max_tot = 0;
+  for(const ind1 in pack.cells.i ){
+    let rur = pack.cells.pop[ind1];
+    let urb = 0;
+    if(pack.cells.burg[ind1]!=0){
+      urb = pack.burgs[pack.cells.burg[ind1]].population;
+    }
+    if(rur+urb>max_tot){
+      max_tot=rur+urb;
+    }
+    cell_pops[ind1]={
+      i: ind1,
+      rural: rur,
+      urban: urb,
+      tot: rur+urb,
+      color: null
+    }
+  }
+  //  max_tot = Math.max(cell_pops.tot);
+console.log(max_tot);
+for (let c_i in cell_pops){
+  cell_pops[c_i].color=scaleColorHex(cell_pops[c_i].urb,cell_pops[c_i].rur,max_tot);
+}
+console.log(cell_pops);
+
+//we're all generated now 
+  const {cells, features} = grid;
+  const {temp, h} = cells;
+  Math.random = aleaPRNG(seed);
+
+  const ICEBERG_MAX_TEMP = 0;
+  const GLACIER_MAX_TEMP = -8;
+  const minMaxTemp = d3.min(temp);
+
+  // cold land: draw glaciers
+  {
+    const type = "iceShield";
+    const getType = cellId => (h[cellId] >= 20 && temp[cellId] <= GLACIER_MAX_TEMP ? type : null);
+    const isolines = getIsolines(grid, getType, {polygons: true});
+    isolines[type]?.polygons?.forEach(points => {
+      const clipped = clipPoly(points);
+      ice.append("polygon").attr("points", clipped).attr("type", type);
+    });
+  }
+
+  // cold water: draw icebergs
+  for (const cellId of grid.cells.i) {
+    const t = temp[cellId];
+    if (h[cellId] >= 20) continue; // no icebergs on land
+    if (t > ICEBERG_MAX_TEMP) continue; // too warm: no icebergs
+    if (features[cells.f[cellId]].type === "lake") continue; // no icebers on lakes
+    if (P(0.8)) continue; // skip most of eligible cells
+
+    const randomFactor = 0.8 + rand() * 0.4; // random size factor
+    let baseSize = (1 - normalize(t, minMaxTemp, 1)) * 0.8; // size: 0 = zero size, 1 = full size
+    if (cells.t[cellId] === -1) baseSize /= 1.3; // coasline: smaller icebergs
+    const size = minmax(rn(baseSize * randomFactor, 2), 0.1, 1);
+
+    const [cx, cy] = grid.points[cellId];
+    const points = getGridPolygon(cellId).map(([x, y]) => [rn(lerp(cx, x, size), 2), rn(lerp(cy, y, size), 2)]);
+    ice.append("polygon").attr("points", points).attr("cell", cellId).attr("size", size).attr("");
+  }
+
+  TIME && console.timeEnd("drawIce");
+}
+
+
+
+
+
+function togglePopulation2(event) {
+  console.log(pack);
+  console.log(pack.cells);
   if (!population.selectAll("line").size()) {
     turnButtonOn("togglePopulation");
     drawPopulation();
@@ -345,7 +604,8 @@ function togglePopulation(event) {
   }
 }
 
-function drawPopulation() {
+
+function drawPopulation2() {
   population.selectAll("line").remove();
 
   const {cells, burgs} = pack;
@@ -383,7 +643,12 @@ function drawPopulation() {
     .transition(show)
     .delay(500)
     .attr("y2", d => d[2]);
+
+  console.log(population);
 }
+
+
+
 
 function toggleCells(event) {
   if (!cells.selectAll("path").size()) {
@@ -481,6 +746,8 @@ function drawCultures() {
   const bodyPaths = new Array(cultures.length - 1);
   const isolines = getIsolines(pack, cellId => cells.culture[cellId], {fill: true, waterGap: true});
   Object.entries(isolines).forEach(([index, {fill, waterGap}]) => {
+    console.log("in culture");
+    console.log(index);
     const color = cultures[index].color;
     bodyPaths.push(getGappedFillPaths("culture", fill, waterGap, color, index));
   });
@@ -509,11 +776,20 @@ function drawReligions() {
 
   const bodyPaths = new Array(religions.length - 1);
   const isolines = getIsolines(pack, cellId => cells.religion[cellId], {fill: true, waterGap: true});
+    console.log("Isolines:" + isolines);
+  console.log(isolines);
+    console.log("BodyPaths:" + bodyPaths);
+  console.log(bodyPaths);
+
   Object.entries(isolines).forEach(([index, {fill, waterGap}]) => {
     const color = religions[index].color;
     bodyPaths.push(getGappedFillPaths("religion", fill, waterGap, color, index));
   });
 
+    console.log("Isolines2:" + isolines);
+  console.log(isolines);
+    console.log("BodyPath2s:" + bodyPaths);
+  console.log(bodyPaths);
   byId("relig").innerHTML = bodyPaths.join("");
 
   TIME && console.timeEnd("drawReligions");

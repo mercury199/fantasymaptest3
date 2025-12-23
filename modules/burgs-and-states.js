@@ -119,18 +119,34 @@ window.BurgsAndStates = (() => {
         .filter(i => !cells.burg[i] && score[i] > 0 && cells.culture[i])
         .sort((a, b) => score[b] - score[a]); // filtered and sorted array of indexes
 
+      console.log("in placetowns");
+
       const desiredNumber =
         manorsInput.value == 1000
           ? rn(sorted.length / 5 / (grid.points.length / 10000) ** 0.8)
           : manorsInput.valueAsNumber;
-      const burgsNumber = Math.min(desiredNumber, sorted.length); // towns to generate
+      const burgsNumber =Math.round( 1.5 * Math.min(Math.ceil(desiredNumber*1.1), sorted.length)); // towns to generate
       let burgsAdded = 0;
 
+      console.log("Sorted Length:" + sorted.length);
+      console.log("Burgs Num: " + burgsNumber);
+      //also look for an option for roughly spacing all of the burgs evently ish apart. 
       const burgsTree = burgs[0];
       let spacing = (graphWidth + graphHeight) / 150 / (burgsNumber ** 0.7 / 66); // min distance between towns
-
+      console.log("(graphWidth + graphHeight):     " + (graphWidth + graphHeight));
+      console.log("(graphWidth + graphHeight)/150:    " + (graphWidth + graphHeight) / 150);
+      console.log(" (burgsNumber ** 0.7 / 66):        " + (burgsNumber ** 0.7 / 66) );
+      //trying to even out the size and spacing here. 
+      spacing*=1.25;
+      //spacing = (graphWidth+graphHeight)/(burgsNumber/10);
+      let spacing_orig = spacing;
+      console.log("Spacing1: " + spacing);
+      let depth_search = 0;
+      //burgsNumber=Math.round(burgsNumber*1.5);
       while (burgsAdded < burgsNumber && spacing > 1) {
+        console.log("Spacing: " + spacing);
         for (let i = 0; burgsAdded < burgsNumber && i < sorted.length; i++) {
+          depth_search = Math.max(depth_search,i);
           if (cells.burg[sorted[i]]) continue;
           const cell = sorted[i];
           const [x, y] = cells.p[cell];
@@ -144,8 +160,71 @@ window.BurgsAndStates = (() => {
           cells.burg[cell] = burg;
           burgsAdded++;
         }
+        console.log("Depth Search: " + depth_search);
         spacing *= 0.5;
       }
+
+      //we're going to override to add some more "frontier towns"
+      if(spacing > 1 && depth_search < (sorted.length*0.8)){
+        let frontierBurgs = Math.ceil(burgsNumber*0.4);
+        let numFrontBurgs = 0;
+        let new_spacing = spacing_orig*9; //tried 13.33 but it seemed too even 
+        
+        let iter_diff = Math.max(1, (Math.round(depth_search/burgsNumber)));
+        //need to change this so that the distance occurs within the first 1/3rd of the points options and goes to the last 80 percent,and this will be the itteration difference. But minus a random number. 
+        //this will ensure a more even spreading over the "frontiers" and other bad places to be. 
+
+
+        while(numFrontBurgs<frontierBurgs && new_spacing>Math.max(1,spacing_orig*0.9)){
+          for (let i = depth_search; numFrontBurgs<frontierBurgs && i < Math.ceil((sorted.length*0.8));i+=1){
+            //depth_search = Math.max(depth_search,i);
+            if (cells.burg[sorted[i]]) continue;
+            const cell = sorted[i];
+            const [x, y] = cells.p[cell];
+            const s = new_spacing * gauss(1, 0.3, 0.2, 2, 2); // randomize to make placement not uniform
+            if (burgsTree.find(x, y, s) !== undefined) continue; // to close to existing burg
+            const burg = burgs.length;
+            const culture = cells.culture[cell];
+            const name = Names.getCulture(culture);
+            burgs.push({cell, x, y, state: 0, i: burg, culture, name, capital: 0, feature: cells.f[cell]});
+            burgsTree.add([x, y]);
+            cells.burg[cell] = burg;
+            numFrontBurgs++;
+          }
+          new_spacing*=0.75;
+        }
+      }
+      //let's add in the "wild territories provinces"
+      if(spacing > 1 && depth_search < (sorted.length*0.8)){
+        let frontierBurgs = Math.ceil(burgsNumber*0.6);
+        let numFrontBurgs = 0;
+        let new_spacing = spacing_orig*50; //tried 13.33 but it seemed too even 
+        
+        let iter_diff = Math.max(1, (Math.round(depth_search/burgsNumber)));
+        //need to change this so that the distance occurs within the first 1/3rd of the points options and goes to the last 80 percent,and this will be the itteration difference. But minus a random number. 
+        //this will ensure a more even spreading over the "frontiers" and other bad places to be. 
+
+
+        while(numFrontBurgs<frontierBurgs && new_spacing>Math.max(1,spacing_orig*2)){
+          for (let i = Math.ceil((sorted.length-1)); numFrontBurgs<frontierBurgs && i > 1 ;i--){
+            //depth_search = Math.max(depth_search,i);
+            if (cells.burg[sorted[i]]) continue;
+            const cell = sorted[i];
+            const [x, y] = cells.p[cell];
+            const s = new_spacing * gauss(1, 0.3, 0.2, 2, 2); // randomize to make placement not uniform
+            if (burgsTree.find(x, y, s) !== undefined) continue; // to close to existing burg
+            const burg = burgs.length;
+            const culture = cells.culture[cell];
+            const name = "Frontier_" + Names.getCulture(culture);
+            burgs.push({cell, x, y, state: 0, i: burg, culture, name, capital: 0, feature: cells.f[cell]});
+            burgsTree.add([x, y]);
+            cells.burg[cell] = burg;
+            numFrontBurgs++;
+          }
+          new_spacing*=0.9;
+        }
+      }       
+
 
       if (manorsInput.value != 1000 && burgsAdded < desiredNumber) {
         ERROR && console.error(`Cannot place all burgs. Requested ${desiredNumber}, placed ${burgsAdded}`);
@@ -177,6 +256,9 @@ window.BurgsAndStates = (() => {
 
       // define burg population (keep urbanization at about 10% rate)
       b.population = rn(Math.max(cells.s[i] / 8 + b.i / 1000 + (i % 100) / 1000, 0.1), 3);
+      if(b.name.includes("Fronier_")){
+        b.population=int(population*0.8);
+      }
       if (b.capital) b.population = rn(b.population * 1.3, 3); // increase capital population
 
       if (b.port) {

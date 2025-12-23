@@ -596,7 +596,8 @@ window.Cultures = (function () {
     function getRiverCost(riverId, cellId, type) {
       if (type === "River") return riverId ? 0 : 100; // penalty for river cultures
       if (!riverId) return 0; // no penalty for others if there is no river
-      return minmax(cells.fl[cellId] / 10, 20, 100); // river penalty from 20 to 100 based on flux
+      //return minmax(cells.fl[cellId] / 10, 20, 100); // river penalty from 20 to 100 based on flux
+      return minmax(cells.fl[cellId] / 10, 60, 200); // river penalty from 20 to 100 based on flux
     }
 
     function getTypeCost(t, type) {
