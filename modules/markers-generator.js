@@ -228,8 +228,17 @@ window.Markers = (function () {
   function addMine(id, cell) {
     const {cells} = pack;
 
-    const resources = {salt: 5, gold: 2, silver: 4, copper: 2, iron: 3, lead: 1, tin: 1};
-    const resource = rw(resources);
+    //const resources = {salt: 5, gold: 2, silver: 4, copper: 2, iron: 3, lead: 1, tin: 1};
+    const resources = {salt: 10, stone:10, gold: 2, silver: 6, copper: 5, iron: 8, lead: 4, tin: 3};
+    const stones={rock:15, granite: 5, slate: 6, marble: 4};  
+    let resource_v = rw(resources);
+    let mine_type = "mine";
+    if(resource_v=="stone"){
+    resource_v = rw(stones);
+    mine_type = "quarry";
+    }
+    const resource = resource_v;
+
     const burg = pack.burgs[cells.burg[cell]];
     const name = `${burg.name} — ${resource} mining town`;
     const population = rn(burg.population * populationRate * urbanization);

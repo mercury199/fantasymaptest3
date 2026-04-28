@@ -79,17 +79,37 @@ function getBoundaryPoints(width, height, spacing) {
 }
 
 // get points on a regular square grid and jitter them a bit
+//controlled jitter to make regular hexagons
 function getJitteredGrid(width, height, spacing) {
+  //spacing = Math.floor(spacing);
+  //changes here to zero
   const radius = spacing / 2; // square radius
-  const jittering = radius * 0.9; // max deviation
+  const jittering = radius * 0; // max deviation // was 0.9
   const doubleJittering = jittering * 2;
   const jitter = () => Math.random() * doubleJittering - jittering;
+ /* console.log("spacing: " + spacing);
+    console.log("radius: " + radius);
+  if( Math.floor(spacing)%2==0){
+      //spacing -=1;
+      console.log("it's even1");
+  }*/
 
   let points = [];
-  for (let y = radius; y < height; y += spacing) {
+  var parity = 0;
+  for (let y = radius; y < height; y += (spacing*0.75) ){ //this config works with 20k points, but not higher amounts, likely due to a raidus that is too small. 
+    //let's just flip the parity here. 
+    //we could do something else, but with decimals in the spacing calculations, it's not ideal.
+    parity+=1;
     for (let x = radius; x < width; x += spacing) {
-      const xj = Math.min(rn(x + jitter(), 2), width);
-      const yj = Math.min(rn(y + jitter(), 2), height);
+      var xj = Math.min(rn(x + jitter(), 2), width);
+      var yj = Math.min(rn(y + jitter(), 2), height);
+
+      if(parity%2 == 1){ //also if the spacing is odd and the base is even then it won't change parity. We need them to swap parity on row for the hexagons to work. 
+        //console.log("XJ1 " + xj);
+         var xj = Math.min(rn(x + spacing/2, 2), width);
+         //console.log("In here! XJ: " + xj);
+      }
+
       points.push([xj, yj]);
     }
   }
